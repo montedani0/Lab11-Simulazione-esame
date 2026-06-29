@@ -83,7 +83,7 @@ class DAO():
                      where i.InvoiceId = il.InvoiceId and il.TrackId =t.TrackId  and al.AlbumId = t.AlbumId 
                      and p.ArtistId = al.ArtistId and t.GenreId =%s  ) as c2
                  where c1.customerid = c2.customerid and c1.artistid != c2.artistid
-                 and c1.p1 >= c2.p1 
+                 and c1.p1 <= c2.p1 
                  group by c1.artistid , c2.artistid
     """)
         cursor.execute(query, (genre, genre, genre, genre,))

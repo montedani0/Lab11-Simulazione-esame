@@ -73,7 +73,7 @@ class Model:
             peso1 = self._graph[parziale[-1]][v]["weight"]
 
             if len(parziale)<2:
-                peso = 0
+                peso = -1
 
             else:
                 peso = self._graph[parziale[-2]][parziale[-1]]["weight"]
