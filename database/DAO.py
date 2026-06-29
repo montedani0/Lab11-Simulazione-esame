@@ -1,9 +1,8 @@
 from oauthlib.uri_validate import query
 
 from database.DB_connect import DBConnect
-from model.artista import Artista
-from model.edge import Edge
-from model.genre import Genre
+from model.arco import Arco
+from model.customer import Customer
 
 
 class DAO():
@@ -11,84 +10,58 @@ class DAO():
         pass
 
     @staticmethod
-    def AllGenre():
-        conn = DBConnect.get_connection()
-        cursor = conn.cursor(dictionary=True)
-        result = []
-        query = """select *
-                   from  genre g 
-"""
-        cursor.execute(query)
-        for row in cursor:
-            result.append(Genre(**row))
-        cursor.close()
-        conn.close()
-        return result
-
-    @staticmethod
-    def allArtist():
+    def getNaz():
         conn = DBConnect.get_connection()
         results = []
         cursor = conn.cursor(dictionary=True)
-        query = ("""select ar.*
-                 from artist ar
-                      """)
+        query = (""" select distinct c.Country 
+                from customer c 
+                 """)
         cursor.execute(query)
         for row in cursor:
-            results.append(Artista(**row))
+            results.append(row['Country'])
 
         cursor.close()
         conn.close()
         return results
 
     @staticmethod
-    def getAllNodes(genre):
+    def getCustomer(nazione):
         conn = DBConnect.get_connection()
         results = []
         cursor = conn.cursor(dictionary=True)
-        query = ("""
-                     select distinct ar.*
-                     from album a, track t , artist ar
-                     where a.AlbumId = t.AlbumId and a.ArtistId = ar.ArtistId   and t.GenreId = %s
-                     """)
-        cursor.execute(query, (genre,))
+        query = ("""select c.CustomerId , c.FirstName , c.LastName ,c.Country 
+from customer c 
+where c.Country = %s
+                    """)
+        cursor.execute(query,(nazione,))
         for row in cursor:
-            results.append(Artista(**row))
+            results.append(Customer(**row))
 
         cursor.close()
         conn.close()
         return results
 
     @staticmethod
-    def getAllEdge(genre, idMap):
+    def getEdge(nazione, idMap):
         conn = DBConnect.get_connection()
         results = []
         cursor = conn.cursor(dictionary=True)
-        query = ("""            
-                select c1.artistid as a1 , c2.artistid as a2, c1.p1 + c2.p1  as peso
-                 from (select i.CustomerId ,p.ArtistId , p.popolarity as p1
-                       from invoice i , invoiceline il, track t , album al, 
-                             (select ar.ArtistId , SUM(il.Quantity ) as popolarity
-                             from artist ar,invoiceline il, track t , album al
-                             where il.TrackId =t.TrackId  and al.AlbumId = t.AlbumId and al.ArtistId =ar.ArtistId and t.GenreId = %s 
-                             group by ar.ArtistId ) as p
-                     where i.InvoiceId = il.InvoiceId and il.TrackId =t.TrackId  and al.AlbumId = t.AlbumId 
-                     and p.ArtistId = al.ArtistId and t.GenreId =%s  ) as c1, 
-                     (select i.CustomerId ,p.ArtistId , p.popolarity as p1
-                       from invoice i , invoiceline il, track t , album al, 
-                             (select ar.ArtistId , SUM(il.Quantity ) as popolarity
-                             from artist ar,invoiceline il, track t , album al
-                             where il.TrackId =t.TrackId  and al.AlbumId = t.AlbumId and al.ArtistId =ar.ArtistId and t.GenreId =%s  
-                             group by ar.ArtistId ) as p
-                     where i.InvoiceId = il.InvoiceId and il.TrackId =t.TrackId  and al.AlbumId = t.AlbumId 
-                     and p.ArtistId = al.ArtistId and t.GenreId =%s  ) as c2
-                 where c1.customerid = c2.customerid and c1.artistid != c2.artistid
-                 and c1.p1 >= c2.p1 
-                 group by c1.artistid , c2.artistid
-    """)
-        cursor.execute(query, (genre, genre, genre, genre,))
+        query = ("""select C1.customerid as f1 , C2.customerid as f2 ,count(C1.genreid ) as peso
+from (select distinct c.CustomerId, t.GenreId 
+from customer c ,invoice i ,invoiceline il,track t  
+where c.CustomerId =i.CustomerId and i.InvoiceId =il.InvoiceId and il.TrackId = t.TrackId
+and c.Country = %s) as C1, (select distinct c.CustomerId, t.GenreId 
+from customer c ,invoice i ,invoiceline il,track t  
+where c.CustomerId =i.CustomerId and i.InvoiceId =il.InvoiceId and il.TrackId = t.TrackId
+and c.Country =  %s) as C2
+where C1.customerid > C2.customerid and C1.genreid = C2.genreid 
+group by C1.customerid, C2.customerid 
+                        """)
+        cursor.execute(query, (nazione,nazione,))
         for row in cursor:
-            results.append(Edge(idMap[row["a1"]], idMap[row["a2"]], row["peso"]))
+            results.append(Arco(idMap[row["f1"]], idMap[row["f2"]], row["peso"]))
+
         cursor.close()
         conn.close()
         return results

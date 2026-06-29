@@ -8,52 +8,41 @@ class Controller:
         # the model, which implements the logic of the program and holds the data
         self._model = model
 
-    def fillDDGenre(self):
-        allGenre = self._model.getAllGenre()
-        generi = list(
-            map(lambda x: ft.dropdown.Option(data=x, key= x.GenreId ,text=x.Name, on_click=self._choiceGenre), allGenre))
+    def fillDDNazione(self):
+        nations = self._model.getNation()
+        naz = list(
+            map(lambda x: ft.dropdown.Option(data=x, key=x, on_click=self._choiceNation), nations)
+        )
 
-        self._view._ddGenre.options = generi
-
+        self._view._ddNazione.options = naz
         self._view.update_page()
 
-    def _choiceGenre(self,e):
-        self._genre = e.control.data
+    def _choiceNation(self,e):
+        self._naz = e.control.data
 
 
-    def fillDDArtist(self):
-        allArtist = self._model.idMapA.values()
-        artist = list(
-            map(lambda x:ft.dropdown.Option(data=x, key=str(x.ArtistId), text=x.Name, on_click=self._choiceArtist), allArtist))
-        self._view._ddArtist.options = artist
-        self._view.update_page()
 
-    def _choiceArtist(self,e):
-        self._artist = e.control.data
-
-
-    def handleCreaGrafo(self, e):
-        genre = self._view._ddGenre.value
+    def handleCreaGrafo(self,e):
+        naz = self._view._ddNazione.value
 
         self._view.txt_result.controls.clear()
 
-        if genre is None:
-            self._view.txt_result.controls.append(ft.Text("Inserire il genere dall'elenco",color="red"))
+        if naz is None:
+            self._view.txt_result.controls.append(ft.Text("Inserire il genere dall'elenco", color="red"))
             self._view.update_page()
             return
 
-        self._model.buildGraph(genre)
-        n,e = self._model.getGraphDetails()
+        self._model.buildGraph(naz)
+        n, e = self._model.graphDetails()
         self._view.txt_result.controls.clear()
         self._view.txt_result.controls.append(ft.Text(f"Grafo creato correttamente", color="green"))
         self._view.txt_result.controls.append(ft.Text(f"Numero di nodi : {n}"))
         self._view.txt_result.controls.append(ft.Text(f"Numero di archi : {e} "))
-        self.fillDDArtist()
+        self.fillCliente()
+        c, s = self._model.clienteAffine()
 
-        a,s = self._model.getInfluenza()
-        self._view.txt_result.controls.append(ft.Text(f"Artista più influente: {a}, con influenza {s}"))
-
-        lista = self._model.getTop5()
+        self._view.txt_result.controls.append(ft.Text(f"Artista più influente: {c}, con influenza {s}"))
+        lista = self._model.top_5_minus()
         self._view.txt_result.controls.append(ft.Text(f"Di seguito la top 5"))
 
         for a in lista:
@@ -62,21 +51,39 @@ class Controller:
         self._view.update_page()
 
 
+    def fillCliente(self):
+        cliente = list(self._model._idMapC.values())
+        cl = list(
+            map(lambda x: ft.dropdown.Option(data=x, key=x.CustomerId, text= x, on_click=self._choiceCliente), cliente)
+        )
+
+        self._view._ddCliente.options = cl
+        self._view.update_page()
+
+    def _choiceCliente(self, e):
+        self._cl = e.control.data
+
 
     def handleCammino(self,e):
-        a1 = self._view._ddArtist.value
+        c1 = self._view._ddCliente.value
 
         self._view.txt_result.controls.clear()
 
-        if a1 is None:
-            self._view.txt_result.controls.append(ft.Text("Inserire l'artista dall'elenco", color="red"))
+        if c1 is None:
+            self._view.txt_result.controls.append(ft.Text("Inserire il cliente dall'elenco", color="red"))
             self._view.update_page()
             return
 
-        st = self._model.getBestPath(a1)
+        st = self._model.getBestPath(c1)
+        if len(st) == 0:
+            self._view.txt_result.controls.append(
+                ft.Text(f"Il cliente selezionato non fa parte del genere scelto in partenza", color="orange"))
+            self._view.update_page()
+            return
 
         self._view.txt_result.controls.append(ft.Text(f"Trovato il cammino max", color="green"))
-        for c in st:
-            self._view.txt_result.controls.append(ft.Text(f"{self._model.idMapA[c].Name}"))
+        for cl in st:
+            self._view.txt_result.controls.append(ft.Text(f"{cl}"))
 
         self._view.update_page()
+

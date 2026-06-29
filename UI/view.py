@@ -20,22 +20,23 @@ class View(ft.UserControl):
 
     def load_interface(self):
         # title
-        self._title = ft.Text("TdP-Simulazione esame Chinook", color="blue", size=24)
+        self._title = ft.Text("TdP - Simulazione Clienti Gemelli", color="blue", size=24)
         self._page.controls.append(self._title)
 
-
-        self._ddGenre = ft.Dropdown(label="Genere")
-        self._controller.fillDDGenre()
+        # RIGA 1: Nazione e Crea Grafo
+        self._ddNazione = ft.Dropdown(label="Nazione")
+        self._controller.fillDDNazione()  # <-- Ricordati di rinominare questo metodo nel controller!
         self._btnCreaGrafo = ft.ElevatedButton(text="Crea Grafo", on_click=self._controller.handleCreaGrafo)
 
-        row1 = ft.Row([self._ddGenre, self._btnCreaGrafo],
+        row1 = ft.Row([self._ddNazione, self._btnCreaGrafo],
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row1)
 
-        self._ddArtist = ft.Dropdown(label="Artist")
-        self._btnCreaGrafo = ft.ElevatedButton(text="Trova Cammino", on_click=self._controller.handleCammino)
+        # RIGA 2: Cliente e Cerca percorso
+        self._ddCliente = ft.Dropdown(label="Cliente")
+        self._btnTrovaCammino = ft.ElevatedButton(text="Cerca percorso", on_click=self._controller.handleCammino)
 
-        row2 = ft.Row([self._ddArtist, self._btnCreaGrafo],
+        row2 = ft.Row([self._ddCliente, self._btnTrovaCammino],
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row2)
 
